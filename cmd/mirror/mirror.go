@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"strings"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -91,10 +92,34 @@ func instanceClause() string {
 	if isSystem {
 		return "WHERE instance_id <> ''"
 	}
-	for i := range instanceIDs {
-		instanceIDs[i] = "'" + instanceIDs[i] + "'"
-	}
+	stringifyInstances()
 
 	// COPY does not allow parameters so we need to set them directly
 	return "WHERE instance_id IN (" + strings.Join(instanceIDs, ", ") + ")"
 }
+
+var customTableInstanceColumns = map[string]string{
+	"projections.system_features": "",
+	"system.encryption_keys":      "",
+	"projections.instances":       "id",
+}
+
+func instanceClauseForVerify(tableName string) string {
+	if column, ok := customTableInstanceColumns[tableName]; ok {
+		if column == "" {
+			return ""
+		}
+		if isSystem {
+			return "WHERE " + column + " <> ''"
+		}
+		stringifyInstances()
+		return "WHERE " + column + "IN (" + strings.Join(instanceIDs, ", ") + ")"
+	}
+	return instanceClause()
+}
+
+var stringifyInstances = sync.OnceFunc(func() {
+	for i := range instanceIDs {
+		instanceIDs[i] = "'" + instanceIDs[i] + "'"
+	}
+})

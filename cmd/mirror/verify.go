@@ -103,7 +103,7 @@ func countEntries(ctx context.Context, client *database.DB, table string) (count
 		func(r *sql.Row) error {
 			return r.Scan(&count)
 		},
-		fmt.Sprintf("SELECT COUNT(*) FROM %s %s", table, instanceClause()),
+		fmt.Sprintf("SELECT COUNT(*) FROM %s %s", table, instanceClauseForVerify(table)),
 	)
 	logging.WithFields("table", table, "db", client.DatabaseName()).OnError(err).Error("unable to count")
 
