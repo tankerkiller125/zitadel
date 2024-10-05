@@ -30,3 +30,5 @@ HEALTHCHECK NONE
 
 USER zitadel
 ENTRYPOINT ["/app/zitadel"]
+
+EXPOSE 8080
